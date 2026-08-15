@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>URL SHORTER</title>
+</head>
+<body>
+    <div class="container">
+        <h1> Url Shortener</h1>
+        <form id="Shorten_form">
+            <div>
+                <label  for="url"> Enter url </label>
+                <input type="url" name="url" id="url" required>
+            </div>
+            <div>
+                <label for="shortecode" > Enter Shorted code  </label>
+                  <input type="text" name="shortecode" id="shortecode" required>
+            </div>
+            <button type="submit"> Submit</button>
+        </form>
+    </div>
+    <h2> Shortened URLs</h2>
+    <ul  id="shortened-urls"> </ul>
+    <script>
+    ///
+
+
+/////
+
+
+
+
+
+
+     const fetchShortened = async () =>{
+       const  response=await fetch("/links");
+       const links = await response.json();
+       console.log("links " ,links);
+       const list = document.getElementById("shortened-urls");
+       list.innerHTML="";
+       for(const [shortCode,url] of  Object.entries(links)){
+        // console.log(`Short Code: ${shortCode}, URL: ${url}`);
+        const li = document.createElement("li");
+
+li.innerHTML = `
+<div class="card">
+
+    <div class="top">
+        <div>
+            <span class="label">🔗 Short URL</span>
+
+            <a href="/${shortCode}" target="_blank">
+                ${window.location.origin}/${shortCode}
+            </a>
+        </div>
+ <div class="actions">
+            <button class="copy-btn" onclick="copyLink('${window.location.origin}/${shortCode}')">
+                📋 Copy
+            </button>
+
+            <button class="delete-btn" onclick="deleteLink('${shortCode}')">
+                🗑 Delete
+            </button>
+        </div>
+    </div>
+       
+    </div>
+
+    <div class="middle">
+        <span class="label">🌍 Original URL</span>
+
+        <a href="${url}" target="_blank" class="original">
+            ${url}
+        </a>
+    </div>
+
+    
+
+</div>
+`;
+
+        list.appendChild(li);
+       }
+
+     }
+
+
+
+
+
+     async function copyLink(link) {
+
+    try {
+        await navigator.clipboard.writeText(link);
+        alert("Copied Successfully!");
+    } catch (err) {
+        console.error(err);
+    }
+
+}
+         async function deleteLink(shortCode) {
+
+    const confirmDelete = confirm("Delete this URL?");
+
+    if (!confirmDelete) return;
+
+    try {
+
+        const response = await fetch(`/delete/${shortCode}`, {
+            method: "DELETE",
+        });
+
+        if (response.ok) {
+
+            fetchShortened();
+
+        } else {
+
+            alert(await response.text());
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+         document.getElementById('Shorten_form')
+         .addEventListener('submit',async(event)=>{
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const url = formData.get('url');
+                const shortecode = formData.get('shortecode');
+                console.log('URL:', url);
+                console.log('Shortened Code:', shortecode);
+                  try{
+                    const response = await fetch("/shorten",{
+
+                        method: "POST",
+                        headers:{"Content-Type": "application/json" },
+                        body: JSON.stringify({url,shortCode: shortecode})
+                    });
+                    if(response.ok){
+                        fetchShortened();
+                        alert("URL shortened successfully!");
+                        event.target.reset();
+                    }else{
+                        const errorMessage = await response.text();
+                        alert(errorMessage);
+                    }
+
+                  }catch(error){
+                    console.error(error);
+                  }
+
+         });
+        fetchShortened();
+    </script>
+</body>
+</html>
